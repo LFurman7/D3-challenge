@@ -22,9 +22,9 @@ var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
 // Import Data
-d3.csv("data.csv").then(function(data, err) {
-    if (err) throw err;
-console.log(healthData)
+d3.csv("../data.csv").then(function(data) {
+  //  if (err) throw err;
+//console.log(healthData)
 
     // Step 1: Parse Data/Cast as numbers
     // ==============================
