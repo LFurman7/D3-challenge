@@ -23,8 +23,7 @@ var chartGroup = svg.append("g")
 
 // Import Data
 d3.csv("../data/data.csv").then(function(data) {
-  //  if (err) throw err;
-//console.log(healthData)
+  
 
     // Step 1: Parse Data/Cast as numbers
     // ==============================
@@ -40,7 +39,7 @@ d3.csv("../data/data.csv").then(function(data) {
       .range([0, width]);
 
     var yLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(hairData, d => d.obesity)])
+      .domain([0, d3.max(healthData, d => d.obesity)])
       .range([height, 0]);
 
     // Step 3: Create axis functions
