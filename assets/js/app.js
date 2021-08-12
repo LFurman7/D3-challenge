@@ -1,72 +1,73 @@
 // change code and add as necessary
-var svgWidth = 960;
-var svgHeight = 500;
+var Width = parseInt(d3.select('#scatter').style('width'));
+var Height = width-width / 4;
 
-var margin = {
-  top: 20,
-  right: 40,
-  bottom: 60,
-  left: 100
-};
-
-var width = svgWidth - margin.left - margin.right;
-var height = svgHeight - margin.top - margin.bottom;
+var margin = 30;
+var BottomPad= 30;
+var LeftPad= 30;
+var Label = 90;
 
 // Create an SVG wrapper, append an SVG group that will hold our chart, and shift the latter by left and top margins.
 var svg = d3.select("#scatter").append("div").classed("chart", true)
             .append("svg")
-            .attr("width", svgWidth)
-            .attr("height", svgHeight);
+            .attr("width", Width)
+            .attr("height", Height);
 
-var chartGroup = svg.append("g")
-  .attr("transform", `translate(${margin.left}, ${margin.top})`);
+var xText = d3.select(".xText");
+svg.append("g")
+  .attr("class", ".xText");
 
-// Import Data
-d3.csv("../data/data.csv").then(function(data) {
-  
+function xTextRef() {
+  xText.attr("transform", "translate(" + ((width - Label) /2 + Label) + "," + (height - margin - BottomPad) + ")"
+  );
+}
+xTextRef();
 
-    // Step 1: Parse Data/Cast as numbers
-    // ==============================
-    healthData.forEach(function(data) {
-      data.poverty = +data.poverty;
-      data.obesity = +data.obesity;
-    });
+var leftX = margin + LeftPad;
+var leftY = (height + Label) /2 - Label;
 
-    // Step 2: Create scale functions
-    // ==============================
-    var xLinearScale = d3.scaleLinear()
-      .domain([20, d3.max(healthData, d => d.poverty)])
-      .range([0, width]);
+xText
+  .append("text")
+  .attr("y", -26)
+  .attr("data-name", "obesity")
+  .attr("data-axis", "x")
+  .attr("class", "aText active x")
+  .text("Obesity Rate (%)");  
 
-    var yLinearScale = d3.scaleLinear()
-      .domain([0, d3.max(healthData, d => d.obesity)])
-      .range([height, 0]);
+  xText
+  .append("text")
+  .attr("y", 0)
+  .attr("data-name", "age")
+  .attr("data-axis", "x")
+  .attr("class", "aText inactive x")
+  .text("Age (Med.)"); 
 
-    // Step 3: Create axis functions
-    // ==============================
-    var bottomAxis = d3.axisBottom(xLinearScale);
-    var leftAxis = d3.axisLeft(yLinearScale);
 
-    // Step 4: Append Axes to the chart
-    // ==============================
-    chartGroup.append("g")
-      .attr("transform", `translate(0, ${height})`)
-      .call(bottomAxis);
+var yText = d3.select(".yText");
+svg.append("g")
+  .attr("class", "yText");
 
-    chartGroup.append("g")
-      .call(leftAxis);
+function yTextRef() {
+  yText.attr("transform", "translate(" + leftX + "," + leftY + ")rotate(-90)"
+  );
+}
+yTextRef();
 
-    // Step 5: Create Circles
-    // ==============================
-    var circlesGroup = chartGroup.selectAll("circle")
-    .data(healthData)
-    .enter()
-    .append("circle")
-    .attr("cx", d => xLinearScale(d.poverty))
-    .attr("cy", d => yLinearScale(d.obesity))
-    .attr("r", "15")
-    .attr("fill", "blue")
-    .attr("opacity", ".25");
+yText
+  .append("text")
+  .attr("y", -26)
+  .attr("data-name", "healthcare")
+  .attr("data-axis", "y")
+  .attr("class", "aText active y")
+  .text("Lack of Healthcare (%)");
+
+yText
+  .append("text")
+  .attr("x", 0)
+  .attr("data-name", "smokes")
+  .attr("data-axis", "y")
+  .attr("class", "aText inactive y")
+  .text("Actively Smokes (%)");
 
     // Step 6: Initialize tool tip
     // ==============================
