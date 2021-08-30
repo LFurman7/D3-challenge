@@ -1,110 +1,143 @@
-// change code and add as necessary
-var Width = parseInt(d3.select('#scatter').style('width'));
-var Height = width-width / 4;
+var height = 600;
+var width = 1000;
+var XAxis = 'poverty'
 
-var margin = 30;
-var BottomPad= 30;
-var LeftPad= 30;
-var Label = 90;
+var margin = {
+    top: 50,
+    right: 50,
+    bottom: 100,
+    left: 100
+};
 
-// Create an SVG wrapper, append an SVG group that will hold our chart, and shift the latter by left and top margins.
-var svg = d3.select("#scatter").append("div").classed("chart", true)
-            .append("svg")
-            .attr("width", Width)
-            .attr("height", Height);
+var chartHeight = height - margin.top - margin.bottom;
+var chartWidth = width - margin.left - margin.right;
 
-var xText = d3.select(".xText");
-svg.append("g")
-  .attr("class", ".xText");
 
-function xTextRef() {
-  xText.attr("transform", "translate(" + ((width - Label) /2 + Label) + "," + (height - margin - BottomPad) + ")"
-  );
+var svg = d3.select('#scatter').append('svg')
+    .attr('height', height)
+    .attr('width', width)
+    .append('g')
+    .attr('transform', `translate(${margin.left}, ${margin.top})`)
+    .attr('id', 'bar_chart');
+
+var labelsGroup = svg.append('g')
+    .attr('transform', `translate(${width / 2}, ${chartHeight + 20})`);
+
+
+svg.append('g')
+    .attr('transform', `translate(-25, ${chartHeight / 2}) rotate(-90)`)
+    .append('text')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('value', 'healthcare')
+    .text(' Lacks Healthcare (%)');
+
+
+labelsGroup.append('text')
+    .attr('x', 0)
+    .attr('y', 20)
+    .attr('value', 'poverty') 
+    .text('In Poverty (%)');
+
+function xScale_update(data, XAxis) {
+    var xLinearScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d[XAxis])])
+        .range([0, chartWidth]);
+
+    return xLinearScale
 }
-xTextRef();
 
-var leftX = margin + LeftPad;
-var leftY = (height + Label) /2 - Label;
+function renderAxes(newXScale, xAxis_g) {
+    var bottomAxis = d3.axisBottom(newXScale);
 
-xText
-  .append("text")
-  .attr("y", -26)
-  .attr("data-name", "obesity")
-  .attr("data-axis", "x")
-  .attr("class", "aText active x")
-  .text("Obesity Rate (%)");  
+    xAxis_g.transition()
+        .duration(1000)
+        .call(bottomAxis);
 
-  xText
-  .append("text")
-  .attr("y", 0)
-  .attr("data-name", "age")
-  .attr("data-axis", "x")
-  .attr("class", "aText inactive x")
-  .text("Age (Med.)"); 
-
-
-var yText = d3.select(".yText");
-svg.append("g")
-  .attr("class", "yText");
-
-function yTextRef() {
-  yText.attr("transform", "translate(" + leftX + "," + leftY + ")rotate(-90)"
-  );
+    return xAxis_g;
 }
-yTextRef();
 
-yText
-  .append("text")
-  .attr("y", -26)
-  .attr("data-name", "healthcare")
-  .attr("data-axis", "y")
-  .attr("class", "aText active y")
-  .text("Lack of Healthcare (%)");
+function UpdateBars(circleGroup, newXScale) {
+    circleGroup
+        .transition()
+        .duration(1000)
+        .attr('cx', d => newXScale(d[XAxis]));
 
-yText
-  .append("text")
-  .attr("x", 0)
-  .attr("data-name", "smokes")
-  .attr("data-axis", "y")
-  .attr("class", "aText inactive y")
-  .text("Actively Smokes (%)");
+    return;
+}
 
-    // Step 6: Initialize tool tip
-    // ==============================
-    var toolTip = d3.tip()
-      .attr("class", "tooltip")
-      .offset([80, -60])
-      .html(function(d) {
-        return (abbr + `%`);
-      });
+d3.csv('/assets/data/data.csv')
+    .then(function (health_poverty_data) {
+        var ymin = d3.min(health_poverty_data.map(d => parseFloat(d['healthcare'])));
+        var ymax = d3.max(health_poverty_data.map(d => parseFloat(d['healthcare'])));
+        var state_abbr = health_poverty_data.map(d => d.abbr);
 
-    // Step 7: Create tooltip in the chart
-    // ==============================
-    chartGroup.call(toolTip);
 
-    // Step 8: Create event listeners to display and hide the tooltip
-    // ==============================
-    circlesGroup.on("click", function(data) {
-      toolTip.show(data, this);
+        var yScale = d3.scaleLinear()
+            .domain([ymin, ymax])
+            .range([chartHeight, 0]);
+       
+            var xmin = d3.min(health_poverty_data, d => parseFloat(d[XAxis]))
+        var xmax = d3.max(health_poverty_data, d => parseFloat(d[XAxis]))
+       
+       
+        var xScale = d3.scaleLinear()
+            .domain([xmin, xmax])
+            .range([0, chartWidth])
+
+        var yAxis_func = d3.axisLeft(yScale);
+        var xAxis_func = d3.axisBottom(xScale);
+
+        var xAxis_g = svg.append('g')
+            .attr('id', 'xaxis')
+            .attr('transform', `translate(0, ${chartHeight})`)
+            .call(xAxis_func);
+
+
+        var yAxis_g = svg.append('g')
+            .attr('id', 'yaxis')
+            .call(yAxis_func);
+
+
+        var circleGroup = svg.selectAll('circle')
+            .data(health_poverty_data)
+            .enter()
+           
+
+        circleGroup.append('circle')
+            .attr('cx', d => xScale(parseFloat(d['poverty'])))
+            .attr('cy', d => yScale(d['healthcare']))
+            .attr('r', 8)
+            .classed('moreInfo', true)
+            .attr('fill', 'green')
+
+
+        circleGroup.append("text")
+            .text(function(d) {
+              return d.abbr;
+            })
+            .attr('dx', d => xScale(parseFloat(d['poverty'])))
+            .attr("text-anchor", "middle") 
+            .attr('alignment-baseline', 'middle')
+            .attr('dy', d => yScale(d['healthcare']))
+            .attr("class", "text_info")
+            .style('font-size', 9)
+            .attr('fill', 'white')
+
+
+            circleGroup.on('mouseover', function(d, i){
+                d3.select(this)
+                .transition()
+                .duration(300) 
+                .attr('r', 10)
+                .attr('fill', 'orange')
+            })
+
+            circleGroup.on('mouseout', function(){
+                d3.select(this)
+                .transition()
+                .attr('r', 8)
+                .attr('fill', 'blue')
+                .style('font-size', 10)
+            })        
     })
-      // onmouseout event
-      .on("mouseout", function(data, index) {
-        toolTip.hide(data);
-      });
-
-    // Create axes labels
-    chartGroup.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left + 40)
-      .attr("x", 0 - (height / 2))
-      .attr("dy", "1em")
-      .attr("class", "axisText")
-      .text("Poverty Rates");
-
-    chartGroup.append("text")
-      .attr("transform", `translate(${width / 2}, ${height + margin.top + 30})`)
-      .attr("class", "axisText")
-      .text("Obesity Rates");
-  }).catch(function(error) {
-    console.log(error);
-  });
